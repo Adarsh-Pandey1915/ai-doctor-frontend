@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
 
 const API_URL = "https://aidoctor-bknd.onrender.com";
 
@@ -20,9 +18,7 @@ export default function App() {
   const sendSymptoms = async () => {
     if (!text.trim()) return;
 
-    const userMsg = { role: "user", content: text };
-    setChat((prev) => [...prev, userMsg]);
-
+    setChat((prev) => [...prev, { role: "user", content: text }]);
     setLoading(true);
 
     try {
@@ -36,19 +32,20 @@ export default function App() {
 
       setDoctors(data.doctors || []);
 
-      const botMsg = {
-        role: "bot",
-        content:
-          `Prediction: ${data.prediction}\n\n` +
-          `Details: ${data.details}\n\n` +
-          `Suggested Tests: ${data.suggested_tests?.join(", ")}`,
-      };
-
-      setChat((prev) => [...prev, botMsg]);
+      setChat((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          content:
+            `Prediction: ${data.prediction}\n\n` +
+            `Details: ${data.details}\n\n` +
+            `Suggested Tests: ${(data.suggested_tests || []).join(", ")}`,
+        },
+      ]);
     } catch (e) {
       setChat((prev) => [
         ...prev,
-        { role: "bot", content: "Error connecting to server" },
+        { role: "bot", content: "Server error or backend not reachable" },
       ]);
     }
 
@@ -63,8 +60,9 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(booking),
       });
+
       alert("Appointment booked successfully");
-    } catch (e) {
+    } catch {
       alert("Booking failed");
     }
   };
@@ -81,115 +79,92 @@ export default function App() {
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
       a.download = "medical_report.pdf";
       a.click();
-    } catch (e) {
+    } catch {
       alert("Report generation failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-white to-purple-100 p-4">
-      <motion.h1
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-4xl font-bold text-center mb-6"
-      >
-        🏥 AI Hospital Assistant
-      </motion.h1>
+    <div style={styles.page}>
+      <h1 style={styles.title}>🏥 AI Hospital Assistant</h1>
 
-      {/* CHAT */}
-      <div className="max-w-5xl mx-auto bg-white rounded p-4 shadow">
-        <div className="h-96 overflow-y-auto border rounded p-2 bg-gray-50">
+      {/* CHAT BOX */}
+      <div style={styles.card}>
+        <div style={styles.chatBox}>
           {chat.map((m, i) => (
-            <div key={i} className="mb-2 whitespace-pre-wrap">
-              <b>{m.role === "user" ? "You" : "AI"}:</b> {m.content}
+            <div key={i} style={styles.msg}>
+              <b>{m.role === "user" ? "You" : "AI"}:</b>
+              <pre style={styles.pre}>{m.content}</pre>
             </div>
           ))}
 
-          {loading && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Loader2 className="animate-spin" /> Thinking...
-            </div>
-          )}
+          {loading && <p>Thinking...</p>}
         </div>
 
-        <div className="flex gap-2 mt-3">
+        <div style={styles.row}>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Enter symptoms..."
-            className="w-full border p-2 rounded"
+            style={styles.textarea}
           />
-          <button
-            onClick={sendSymptoms}
-            className="bg-blue-600 text-white px-4 rounded"
-          >
+          <button onClick={sendSymptoms} style={styles.button}>
             Send
           </button>
         </div>
       </div>
 
       {/* DOCTORS */}
-      <div className="max-w-5xl mx-auto mt-6 grid md:grid-cols-3 gap-4">
+      <div style={styles.grid}>
         {doctors.map((d, i) => (
-          <div key={i} className="bg-white p-4 shadow rounded">
-            <h2 className="font-bold">{d.name}</h2>
+          <div key={i} style={styles.card}>
+            <h3>{d.name}</h3>
             <p>{d.specialty}</p>
-            <p>📞 {d.phone}</p>
-            <p>⏰ {d.availability}</p>
+            <p>{d.phone}</p>
+            <p>{d.availability}</p>
           </div>
         ))}
       </div>
 
       {/* BOOKING */}
-      <div className="max-w-5xl mx-auto mt-6 bg-white p-4 shadow rounded">
+      <div style={styles.card}>
         <input
           placeholder="Your Name"
-          className="border p-2 w-full mb-2"
-          onChange={(e) =>
-            setBooking({ ...booking, name: e.target.value })
-          }
+          style={styles.input}
+          onChange={(e) => setBooking({ ...booking, name: e.target.value })}
         />
 
         <input
           placeholder="Doctor Name"
-          className="border p-2 w-full mb-2"
-          onChange={(e) =>
-            setBooking({ ...booking, doctor: e.target.value })
-          }
+          style={styles.input}
+          onChange={(e) => setBooking({ ...booking, doctor: e.target.value })}
         />
 
         <input
           placeholder="Time"
-          className="border p-2 w-full mb-2"
-          onChange={(e) =>
-            setBooking({ ...booking, time: e.target.value })
-          }
+          style={styles.input}
+          onChange={(e) => setBooking({ ...booking, time: e.target.value })}
         />
 
         <input
           placeholder="Symptoms"
-          className="border p-2 w-full mb-2"
+          style={styles.input}
           onChange={(e) =>
             setBooking({ ...booking, symptoms: e.target.value })
           }
         />
 
-        <div className="flex gap-2">
-          <button
-            onClick={bookAppointment}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
+        <div style={styles.row}>
+          <button onClick={bookAppointment} style={styles.greenBtn}>
             Book Appointment
           </button>
 
-          <button
-            onClick={downloadReport}
-            className="bg-gray-600 text-white px-4 py-2 rounded"
-          >
+          <button onClick={downloadReport} style={styles.grayBtn}>
             Download Report
           </button>
         </div>
@@ -197,3 +172,81 @@ export default function App() {
     </div>
   );
 }
+
+/* SIMPLE INLINE STYLES (NO LIBRARIES NEEDED) */
+const styles = {
+  page: {
+    fontFamily: "Arial",
+    padding: 20,
+    background: "#f5f7ff",
+    minHeight: "100vh",
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  card: {
+    background: "white",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  },
+  chatBox: {
+    height: 300,
+    overflowY: "auto",
+    border: "1px solid #ddd",
+    padding: 10,
+    background: "#fafafa",
+  },
+  msg: {
+    marginBottom: 10,
+  },
+  pre: {
+    whiteSpace: "pre-wrap",
+    margin: 0,
+  },
+  row: {
+    display: "flex",
+    gap: 10,
+    marginTop: 10,
+  },
+  textarea: {
+    flex: 1,
+    padding: 10,
+  },
+  input: {
+    width: "100%",
+    padding: 10,
+    marginBottom: 10,
+  },
+  button: {
+    padding: "10px 20px",
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: 5,
+    cursor: "pointer",
+  },
+  greenBtn: {
+    padding: "10px 20px",
+    background: "green",
+    color: "white",
+    border: "none",
+    borderRadius: 5,
+    cursor: "pointer",
+  },
+  grayBtn: {
+    padding: "10px 20px",
+    background: "gray",
+    color: "white",
+    border: "none",
+    borderRadius: 5,
+    cursor: "pointer",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gap: 10,
+  },
+};
