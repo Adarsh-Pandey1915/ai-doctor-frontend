@@ -1,9 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -51,7 +46,10 @@ export default function App() {
 
       setChat((prev) => [...prev, botMsg]);
     } catch (e) {
-      setChat((prev) => [...prev, { role: "bot", content: "Error connecting to server" }]);
+      setChat((prev) => [
+        ...prev,
+        { role: "bot", content: "Error connecting to server" },
+      ]);
     }
 
     setLoading(false);
@@ -76,7 +74,9 @@ export default function App() {
       const res = await fetch(`${API_URL}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: booking.symptoms || "general checkup" }),
+        body: JSON.stringify({
+          text: booking.symptoms || "general checkup",
+        }),
       });
 
       const blob = await res.blob();
@@ -100,78 +100,100 @@ export default function App() {
         🏥 AI Hospital Assistant
       </motion.h1>
 
-      <Tabs defaultValue="chat" className="max-w-5xl mx-auto">
-        <TabsList className="grid grid-cols-3">
-          <TabsTrigger value="chat">AI Doctor</TabsTrigger>
-          <TabsTrigger value="doctors">Doctors</TabsTrigger>
-          <TabsTrigger value="booking">Booking</TabsTrigger>
-        </TabsList>
+      {/* CHAT */}
+      <div className="max-w-5xl mx-auto bg-white rounded p-4 shadow">
+        <div className="h-96 overflow-y-auto border rounded p-2 bg-gray-50">
+          {chat.map((m, i) => (
+            <div key={i} className="mb-2 whitespace-pre-wrap">
+              <b>{m.role === "user" ? "You" : "AI"}:</b> {m.content}
+            </div>
+          ))}
 
-        {/* CHAT */}
-        <TabsContent value="chat">
-          <Card className="mt-4">
-            <CardContent className="p-4">
-              <div className="h-96 overflow-y-auto border rounded p-2 bg-white">
-                {chat.map((m, i) => (
-                  <div key={i} className="mb-2 whitespace-pre-wrap">
-                    <b>{m.role === "user" ? "You" : "AI"}:</b> {m.content}
-                  </div>
-                ))}
+          {loading && (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Loader2 className="animate-spin" /> Thinking...
+            </div>
+          )}
+        </div>
 
-                {loading && (
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Loader2 className="animate-spin" /> Thinking...
-                  </div>
-                )}
-              </div>
+        <div className="flex gap-2 mt-3">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Enter symptoms..."
+            className="w-full border p-2 rounded"
+          />
+          <button
+            onClick={sendSymptoms}
+            className="bg-blue-600 text-white px-4 rounded"
+          >
+            Send
+          </button>
+        </div>
+      </div>
 
-              <div className="flex gap-2 mt-3">
-                <Textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Enter symptoms..."
-                />
-                <Button onClick={sendSymptoms}>Send</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* DOCTORS */}
-        <TabsContent value="doctors">
-          <div className="grid md:grid-cols-3 gap-4 mt-4">
-            {doctors.map((d, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <h2 className="font-bold">{d.name}</h2>
-                  <p>{d.specialty}</p>
-                  <p>📞 {d.phone}</p>
-                  <p>⏰ {d.availability}</p>
-                </CardContent>
-              </Card>
-            ))}
+      {/* DOCTORS */}
+      <div className="max-w-5xl mx-auto mt-6 grid md:grid-cols-3 gap-4">
+        {doctors.map((d, i) => (
+          <div key={i} className="bg-white p-4 shadow rounded">
+            <h2 className="font-bold">{d.name}</h2>
+            <p>{d.specialty}</p>
+            <p>📞 {d.phone}</p>
+            <p>⏰ {d.availability}</p>
           </div>
-        </TabsContent>
+        ))}
+      </div>
 
-        {/* BOOKING */}
-        <TabsContent value="booking">
-          <Card className="mt-4">
-            <CardContent className="p-4 space-y-3">
-              <Input placeholder="Your Name" onChange={(e) => setBooking({ ...booking, name: e.target.value })} />
-              <Input placeholder="Doctor Name" onChange={(e) => setBooking({ ...booking, doctor: e.target.value })} />
-              <Input placeholder="Time" onChange={(e) => setBooking({ ...booking, time: e.target.value })} />
-              <Input placeholder="Symptoms" onChange={(e) => setBooking({ ...booking, symptoms: e.target.value })} />
+      {/* BOOKING */}
+      <div className="max-w-5xl mx-auto mt-6 bg-white p-4 shadow rounded">
+        <input
+          placeholder="Your Name"
+          className="border p-2 w-full mb-2"
+          onChange={(e) =>
+            setBooking({ ...booking, name: e.target.value })
+          }
+        />
 
-              <div className="flex gap-2">
-                <Button onClick={bookAppointment}>Book Appointment</Button>
-                <Button variant="secondary" onClick={downloadReport}>
-                  Download Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        <input
+          placeholder="Doctor Name"
+          className="border p-2 w-full mb-2"
+          onChange={(e) =>
+            setBooking({ ...booking, doctor: e.target.value })
+          }
+        />
+
+        <input
+          placeholder="Time"
+          className="border p-2 w-full mb-2"
+          onChange={(e) =>
+            setBooking({ ...booking, time: e.target.value })
+          }
+        />
+
+        <input
+          placeholder="Symptoms"
+          className="border p-2 w-full mb-2"
+          onChange={(e) =>
+            setBooking({ ...booking, symptoms: e.target.value })
+          }
+        />
+
+        <div className="flex gap-2">
+          <button
+            onClick={bookAppointment}
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Book Appointment
+          </button>
+
+          <button
+            onClick={downloadReport}
+            className="bg-gray-600 text-white px-4 py-2 rounded"
+          >
+            Download Report
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
